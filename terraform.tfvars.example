@@ -1,0 +1,20 @@
+# AWS Configuration
+aws_region = "us-east-1"
+
+# Network Configuration
+# Replace with your actual public IP address
+# You can find it by running: curl ifconfig.me
+my_ip = "203.0.113.0/32"
+
+# EC2 Configuration
+# Replace with your actual AWS key pair name
+key_pair_name = "your-key-pair-name"
+
+# Instance Types (defaults are set, but you can override)
+bastion_instance_type = "t3.micro"
+web_instance_type     = "t3.micro"
+db_instance_type      = "t3.small"
+
+# Server Password for SSH authentication
+# Change this to a secure password
+server_password = "YourSecurePassword123!"
