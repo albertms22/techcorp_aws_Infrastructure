@@ -1,0 +1,86 @@
+graph TB
+    subgraph Internet
+        Users[Users/Clients]
+        Admin[Administrator]
+    end
+
+    subgraph AWS["AWS Cloud - Region: us-east-1"]
+        subgraph VPC["VPC: 10.0.0.0/16<br/>techcorp-vpc"]
+            IGW[Internet Gateway]
+            
+            subgraph AZ1["Availability Zone 1"]
+                subgraph PubSub1["Public Subnet 1<br/>10.0.1.0/24"]
+                    Bastion[Bastion Host<br/>t3.micro<br/>Amazon Linux 2]
+                    NAT1[NAT Gateway 1]
+                end
+                
+                subgraph PrivSub1["Private Subnet 1<br/>10.0.3.0/24"]
+                    Web1[Web Server 1<br/>t3.micro<br/>Apache]
+                    DB[Database Server<br/>t3.small<br/>PostgreSQL]
+                end
+            end
+            
+            subgraph AZ2["Availability Zone 2"]
+                subgraph PubSub2["Public Subnet 2<br/>10.0.2.0/24"]
+                    ALB[Application<br/>Load Balancer]
+                    NAT2[NAT Gateway 2]
+                end
+                
+                subgraph PrivSub2["Private Subnet 2<br/>10.0.4.0/24"]
+                    Web2[Web Server 2<br/>t3.micro<br/>Apache]
+                end
+            end
+        end
+    end
+
+    %% User connections
+    Users -->|HTTP/HTTPS| ALB
+    Admin -->|SSH:22| Bastion
+    
+    %% Internet Gateway connections
+    IGW ---|Routes traffic| PubSub1
+    IGW ---|Routes traffic| PubSub2
+    
+    %% Load Balancer to Web Servers
+    ALB -->|Target Group| Web1
+    ALB -->|Target Group| Web2
+    
+    %% Bastion to internal servers
+    Bastion -.->|SSH:22| Web1
+    Bastion -.->|SSH:22| Web2
+    Bastion -.->|SSH:22| DB
+    
+    %% Web to Database
+    Web1 -.->|PostgreSQL:5432| DB
+    Web2 -.->|PostgreSQL:5432| DB
+    
+    %% NAT Gateway connections
+    Web1 -.->|Internet Access| NAT1
+    Web2 -.->|Internet Access| NAT2
+    DB -.->|Internet Access| NAT1
+    NAT1 -->|Routes to| IGW
+    NAT2 -->|Routes to| IGW
+
+    %% Styling
+    classDef public fill:#e1f5ff,stroke:#0066cc,stroke-width:2px
+    classDef private fill:#fff4e1,stroke:#cc6600,stroke-width:2px
+    classDef gateway fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    classDef lb fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    
+    class PubSub1,PubSub2,Bastion public
+    class PrivSub1,PrivSub2,Web1,Web2,DB private
+    class IGW,NAT1,NAT2 gateway
+    class ALB lb
+
+    %% Legend
+    subgraph Legend
+        L1[Public Resources]
+        L2[Private Resources]
+        L3[Gateways]
+        L4[Load Balancer]
+    end
+    
+    class L1 public
+    class L2 private
+    class L3 gateway
+    class L4 lb
